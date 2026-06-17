@@ -1,16 +1,40 @@
 <!DOCTYPE html>
 <html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Riset: Security Flow Analysis</title>
+</head>
 <body>
-    <h3>Riset: Window Pop-up URL Spoofing</h3>
-    <button id="testBtn">Uji Spoofing</button>
+    <h3>Riset: Analisis Alur Eksekusi & Navigasi</h3>
+    <button id="triggerBtn">Mulai Tes Keamanan</button>
 
     <script>
-        document.getElementById('testBtn').addEventListener('click', () => {
-            // Membuka jendela baru dengan ukuran spesifik
+        document.getElementById('triggerBtn').addEventListener('click', () => {
+            // 1. Membuka pop-up untuk riset isolasi UI
             const win = window.open('about:blank', '_blank', 'width=800,height=600');
             
-            // Menulis konten yang meniru tampilan UI di dalam jendela tersebut
-            win.document.write('<html><body><div style="background:#eee; padding:10px;">URL: https://accounts.google.com</div><iframe src="https://artha231.github.io/testing-browser/" style="width:100%; height:90%;"></iframe></body></html>');
+            win.document.write(`
+                <html>
+                <body>
+                    <div style="padding: 20px; text-align: center;">
+                        <h2>Analisis Eksekusi Media</h2>
+                        <audio id="researchAudio" controls autoplay>
+                            <source src="rusdi.mp3" type="audio/mp3">
+                        </audio>
+                    </div>
+                    <script>
+                        const audio = document.getElementById('researchAudio');
+                        // Saat audio mulai diputar, picu navigasi
+                        audio.onplay = () => {
+                            setTimeout(() => {
+                                window.location.replace('https://www.google.com');
+                            }, 1500);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            win.document.close();
         });
     </script>
 </body>
