@@ -2,39 +2,34 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Riset: Security Flow Analysis</title>
+    <title>PoC Security Research: Navigation Race</title>
 </head>
 <body>
-    <h3>Riset: Analisis Alur Eksekusi & Navigasi</h3>
-    <button id="triggerBtn">Mulai Tes Keamanan</button>
+    <h2>Riset: Media Lifecycle Persistence</h2>
+    <p>Klik tombol untuk memicu race antara Audio dan Navigasi.</p>
+    <button id="raceBtn">Eksekusi Uji</button>
 
     <script>
-        document.getElementById('triggerBtn').addEventListener('click', () => {
-            // 1. Membuka pop-up untuk riset isolasi UI
-            const win = window.open('about:blank', '_blank', 'width=800,height=600');
+        document.getElementById('raceBtn').addEventListener('click', () => {
+            // 1. Inisialisasi AudioContext untuk menguji persistensi media
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
             
-            win.document.write(`
-                <html>
-                <body>
-                    <div style="padding: 20px; text-align: center;">
-                        <h2>Analisis Eksekusi Media</h2>
-                        <audio id="researchAudio" controls autoplay>
-                            <source src="rusdi.mp3" type="audio/mp3">
-                        </audio>
-                    </div>
-                    <script>
-                        const audio = document.getElementById('researchAudio');
-                        // Saat audio mulai diputar, picu navigasi
-                        audio.onplay = () => {
-                            setTimeout(() => {
-                                window.location.replace('https://www.google.com');
-                            }, 1500);
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `);
-            win.document.close();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            gainNode.gain.value = 0.1; // Volume rendah untuk pengujian
+            oscillator.start();
+
+            console.log("[PoC] Media context started.");
+
+            // 2. Race Condition: Memicu navigasi tepat setelah perintah start
+            // Teknik ini menguji apakah navigasi 'menang' sebelum cleanup media terjadi
+            setTimeout(() => {
+                console.log("[PoC] Navigasi ke Google dipicu...");
+                window.location.replace('https://www.google.com');
+            }, 50); 
         });
     </script>
 </body>
