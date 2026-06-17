@@ -1,49 +1,42 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>PoC: Media Policy Bypass Research</title>
-</head>
+<html lang="id">
 <body>
-    <h2>Security Research: Media Policy Bypass</h2>
-    <p>Status: Monitoring Browser Behavior</p>
+    <h3>Riset: Permission Policy Consistency</h3>
+    <button id="testBtn">Jalankan Uji Delegasi</button>
+    <div id="log"></div>
 
     <script>
-        (function() {
-            // 1. Teknik Brute-Force AudioContext Resumption
-            const attemptUnlock = async () => {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    if (ctx.state === 'suspended') {
-                        await ctx.resume();
-                        console.log("[PoC] AudioContext resumed via race-attempt.");
-                    }
-                } catch (e) {
-                    // Fail silently
-                }
-            };
+        document.getElementById('testBtn').addEventListener('click', () => {
+            const log = document.getElementById('testBtn');
+            
+            // 1. Membuat Iframe dengan Izin Autoplay
+            const frame = document.createElement('iframe');
+            frame.setAttribute('allow', 'autoplay');
+            frame.style.display = 'none';
+            document.body.appendChild(frame);
 
-            // 2. Flooding event-loop dengan multiple attempts
-            for (let i = 0; i < 5; i++) {
-                setTimeout(attemptUnlock, i * 100);
-            }
+            // 2. Mengisi Iframe dengan konten yang mencoba autoplay
+            frame.srcdoc = `
+                <html>
+                <body>
+                    <audio id="audio" src="rusdi.mp3" loop></audio>
+                    <script>
+                        const audio = document.getElementById('audio');
+                        audio.play()
+                            .then(() => parent.postMessage('SUCCESS: Iframe Autoplay', '*'))
+                            .catch(e => parent.postMessage('BLOCKED: Iframe Autoplay', '*'));
+                    <\/script>
+                </body>
+                </html>
+            `;
 
-            // 3. TTS-based Audio Alert (Payload)
-            const triggerAlert = () => {
-                if ('speechSynthesis' in window) {
-                    const utterance = new SpeechSynthesisUtterance("Security alert. Identity verification required.");
-                    speechSynthesis.speak(utterance);
-                }
-            };
-
-            // 4. Monitoring Visibility untuk memicu eksploitasi
-            document.addEventListener('visibilitychange', () => {
-                if (!document.hidden) {
-                    console.log("[PoC] User interaction detected via Visibility Change.");
-                    triggerAlert();
-                }
+            // 3. Mendengarkan hasil delegasi
+            window.addEventListener('message', (event) => {
+                const p = document.createElement('p');
+                p.textContent = event.data;
+                document.body.appendChild(p);
             });
-        })();
+        });
     </script>
 </body>
 </html>
