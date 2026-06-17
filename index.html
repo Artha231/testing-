@@ -1,42 +1,42 @@
 <!DOCTYPE html>
 <html lang="id">
 <body>
-    <h3>Riset: Permission Policy Consistency</h3>
-    <button id="testBtn">Jalankan Uji Delegasi</button>
-    <div id="log"></div>
+    <h3>Riset: Autoplay Tanpa Interaksi</h3>
+    <div id="status">Menunggu inisialisasi...</div>
 
     <script>
-        document.getElementById('testBtn').addEventListener('click', () => {
-            const log = document.getElementById('testBtn');
+        // Fungsi langsung dijalankan saat skrip dimuat (IIFE)
+        (function() {
+            const status = document.getElementById('status');
             
-            // 1. Membuat Iframe dengan Izin Autoplay
+            // Membuat iframe segera saat halaman di-load
             const frame = document.createElement('iframe');
+            // Menambahkan atribut allow autoplay agar diizinkan
             frame.setAttribute('allow', 'autoplay');
             frame.style.display = 'none';
             document.body.appendChild(frame);
 
-            // 2. Mengisi Iframe dengan konten yang mencoba autoplay
+            // Mengisi konten iframe
             frame.srcdoc = `
                 <html>
                 <body>
                     <audio id="audio" src="rusdi.mp3" loop></audio>
                     <script>
                         const audio = document.getElementById('audio');
+                        // Mencoba memutar audio segera setelah iframe dimuat
                         audio.play()
-                            .then(() => parent.postMessage('SUCCESS: Iframe Autoplay', '*'))
-                            .catch(e => parent.postMessage('BLOCKED: Iframe Autoplay', '*'));
+                            .then(() => parent.postMessage('SUCCESS: Autoplay Tanpa Klik', '*'))
+                            .catch(e => parent.postMessage('BLOCKED: Autoplay Perlu Gesture', '*'));
                     <\/script>
                 </body>
                 </html>
             `;
 
-            // 3. Mendengarkan hasil delegasi
+            // Menerima hasil
             window.addEventListener('message', (event) => {
-                const p = document.createElement('p');
-                p.textContent = event.data;
-                document.body.appendChild(p);
+                status.textContent = event.data;
             });
-        });
+        })();
     </script>
 </body>
 </html>
