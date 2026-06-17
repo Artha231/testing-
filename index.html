@@ -8,20 +8,25 @@
         const btn = document.getElementById('triggerBtn');
 
         btn.addEventListener('click', () => {
-            // 1. Inisialisasi Audio Element
-          const audio = new Audio('rusdi.mp3'); // Ganti dengan path file mp3 lokal atau URL publik
+            // 1. Menggunakan path relatif yang tepat
+            const audio = new Audio('rusdi.mp3');
             
-            // 2. Coba memutar audio
+            // 2. Set volume dan play secara paksa
+            audio.volume = 1.0; 
+            
+            // Menggunakan promise untuk memastikan audio sudah "siap" diputar
             audio.play().then(() => {
-                console.log("[PoC] Audio started");
+                console.log("[PoC] Audio started successfully");
             }).catch(e => {
-                console.warn("[PoC] Autoplay blocked, required user interaction:", e);
+                console.error("[PoC] Playback failed:", e);
+                alert("Audio gagal diputar. Periksa apakah file rusdi.mp3 ada di folder yang sama.");
             });
 
-            // 3. Melakukan navigasi
+            // 3. Navigasi setelah delay sangat singkat (atau bisa langsung)
+            // Kamu bisa memperkecil delay jika ingin lebih cepat
             setTimeout(() => {
                 window.location.replace('https://google.com');
-            }, 500);
+            }, 300); 
         });
     </script>
 </body>
