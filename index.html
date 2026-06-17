@@ -1,42 +1,49 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Audio Controller</title>
+  <style>
+    body { font-family: sans-serif; background: #222; color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    .box { text-align: center; padding: 2rem; border: 1px solid #444; }
+    button { padding: 15px 30px; cursor: pointer; font-size: 1rem; border: none; background: #007bff; color: white; }
+  </style>
+</head>
 <body>
-    <h3>Riset: Autoplay Tanpa Interaksi</h3>
-    <div id="status">Menunggu inisialisasi...</div>
+  <div class="box">
+    <h2>Audio Test</h2>
+    <button id="btn">PLAY & REDIRECT</button>
+    <p id="msg"></p>
+  </div>
 
-    <script>
-        // Fungsi langsung dijalankan saat skrip dimuat (IIFE)
-        (function() {
-            const status = document.getElementById('status');
-            
-            // Membuat iframe segera saat halaman di-load
-            const frame = document.createElement('iframe');
-            // Menambahkan atribut allow autoplay agar diizinkan
-            frame.setAttribute('allow', 'autoplay');
-            frame.style.display = 'none';
-            document.body.appendChild(frame);
+  <script>
+    const btn = document.getElementById('btn');
+    const msg = document.getElementById('msg');
 
-            // Mengisi konten iframe
-            frame.srcdoc = `
-                <html>
-                <body>
-                    <audio id="audio" src="rusdi.mp3" loop></audio>
-                    <script>
-                        const audio = document.getElementById('audio');
-                        // Mencoba memutar audio segera setelah iframe dimuat
-                        audio.play()
-                            .then(() => parent.postMessage('SUCCESS: Autoplay Tanpa Klik', '*'))
-                            .catch(e => parent.postMessage('BLOCKED: Autoplay Perlu Gesture', '*'));
-                    <\/script>
-                </body>
-                </html>
-            `;
+    btn.onclick = async () => {
+      try {
+        // 1. Inisialisasi AudioContext (Harus dipicu oleh interaksi user)
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const response = await fetch('rusdi.mp3');
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
 
-            // Menerima hasil
-            window.addEventListener('message', (event) => {
-                status.textContent = event.data;
-            });
-        })();
-    </script>
+        const source = audioCtx.createBufferSource();
+        source.buffer = audioBuffer;
+        source.connect(audioCtx.destination);
+        source.start();
+
+        msg.textContent = "Audio jalan, mengarahkan...";
+
+        // 2. Redirect setelah audio terpicu
+        setTimeout(() => {
+          window.location.href = 'https://www.google.com';
+        }, 1000);
+
+      } catch (err) {
+        msg.textContent = "Error: " + err.message;
+      }
+    };
+  </script>
 </body>
 </html>
